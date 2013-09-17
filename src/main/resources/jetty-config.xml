@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation=" http://www.springframework.org/schema/beans
+                            http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="context_handler" class="org.eclipse.jetty.servlet.ServletContextHandler">
+        <property name="contextPath" value="/"/>
+        <property name="servletHandler">
+            <bean id="servlet_handler" class="org.eclipse.jetty.servlet.ServletHandler">
+
+                <property name="servlets">
+                    <array>
+                        <bean id="servlet_holder" class="org.eclipse.jetty.servlet.ServletHolder">
+                            <property name="servlet">
+                                <bean class=" org.apache.cxf.transport.servlet.CXFServlet"/>
+                            </property>
+                            <property name="name" value="cfx_servlet"/>
+                            <property name="initParameters">
+                                <map>
+                                    <entry key="config-location" value="classpath:webservice-config.xml"/>
+                                </map>
+                            </property>
+                        </bean>
+                    </array>
+                </property>
+                <property name="servletMappings">
+                    <array>
+                        <bean class="org.eclipse.jetty.servlet.ServletMapping">
+                            <property name="servletName" value="cfx_servlet"/>
+                            <property name="default" value="false"/>
+                            <property name="pathSpec" value="/service/*"/>
+                        </bean>
+                    </array>
+                </property>
+            </bean>
+        </property>
+	</bean>
+
+	<bean id="jetty_server" class="org.eclipse.jetty.server.Server"
+		  init-method="start" destroy-method="stop">
+		<property name="threadPool">
+			<bean id="apiThreadPool" class="org.eclipse.jetty.util.thread.QueuedThreadPool">
+				<property name="minThreads" value="10"/>
+				<property name="maxThreads" value="200"/>
+			</bean>
+		</property>
+		<property name="connectors">
+			<list>
+				<bean id="connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector">
+					<property name="port" value="8080"/>
+					<property name="maxIdleTime" value="30000"/>
+					<property name="lowResourcesConnections" value="5000"/>
+					<property name="lowResourcesMaxIdleTime" value="5000"/>
+					<property name="acceptors" value="4"/>
+					<property name="statsOn" value="false"/>
+					<property name="acceptQueueSize" value="500"/>
+				</bean>
+			</list>
+		</property>
+		<property name="handler">
+			<bean id="handlers" class="org.eclipse.jetty.server.handler.HandlerList">
+				<property name="handlers">
+					<list>
+						<ref bean="rest_dispatcher"/>
+						<bean class="org.eclipse.jetty.server.handler.DefaultHandler"/>
+					</list>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+    <bean id="jws_server" class="org.eclipse.jetty.server.Server"
+          init-method="start" destroy-method="stop">
+        <property name="threadPool">
+            <bean id="wsThreadPool" class="org.eclipse.jetty.util.thread.QueuedThreadPool">
+                <property name="minThreads" value="10"/>
+                <property name="maxThreads" value="50"/>
+            </bean>
+        </property>
+        <property name="connectors">
+            <list>
+                <bean id="connector" class="org.eclipse.jetty.server.nio.SelectChannelConnector">
+                    <property name="port" value="8081"/>
+                    <property name="maxIdleTime" value="30000"/>
+                    <property name="lowResourcesConnections" value="5000"/>
+                    <property name="lowResourcesMaxIdleTime" value="5000"/>
+                    <property name="acceptors" value="4"/>
+                    <property name="statsOn" value="false"/>
+                    <property name="acceptQueueSize" value="500"/>
+                </bean>
+            </list>
+        </property>
+        <property name="handler">
+            <bean id="handlers" class="org.eclipse.jetty.server.handler.HandlerList">
+                <property name="handlers">
+                    <list>
+                        <ref bean="context_handler"/>
+                        <bean class="org.eclipse.jetty.server.handler.DefaultHandler"/>
+                    </list>
+                </property>
+            </bean>
+        </property>
+    </bean>
+</beans>
