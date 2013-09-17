@@ -1,6 +1,6 @@
 package com.uuweaver.dev_launcher;
 
-import com.uuweaver.ucore.util.SpringContextUtil;
+import com.uuweaver.ucore.util.SpringContextUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.ApplicationContext;
 
@@ -14,7 +14,7 @@ public class App
     {
         ApplicationContext context = new ClassPathXmlApplicationContext("classpath*:spring-config.xml");
 
-        SpringContextUtil util = context.getBean(SpringContextUtil.class);
+        SpringContextUtils util = context.getBean(SpringContextUtils.class);
         util.setApplicationContext(context);
     }
 }

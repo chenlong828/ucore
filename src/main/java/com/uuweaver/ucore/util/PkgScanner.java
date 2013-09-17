@@ -17,11 +17,11 @@ import java.util.jar.JarFile;
  * User: chenlong828
  * Date: 10/6/12
  * Time: 8:37 PM
- * To change this template use File | Settings | File Templates.
+ * @deprecated 使用Reflections替代
  */
 public class PkgScanner {
     public static List<String> getClassInPackage(String package_name) throws IOException {
-        List<String> classNames = new ArrayList<String>();
+        ArrayList<String> classNames = new ArrayList<String>();
 
         if(null == package_name || "".equals(package_name)){
             return classNames;
@@ -33,7 +33,7 @@ public class PkgScanner {
         //System.out.println("----+++++----->" + resourceName);
 
         URL url = loader.getResource(resourceName);
-        System.out.println("----------------->" + url);
+        //System.out.println("----------------->url:" + url);
 
         if (url.toString().startsWith("file:")) {
             //file:/home/username/workspace/myproject/classes/a/b/c
@@ -53,7 +53,7 @@ public class PkgScanner {
 
             int index = url.toString().indexOf('!');
 
-            String filePath = url.toString().substring(10, index);
+            String filePath = url.toString().substring(9, index);
             //System.out.println("--------path--------->" + filePath);
             JarFile jarFile = new JarFile(filePath);
             for (Enumeration<JarEntry> files = jarFile.entries(); files.hasMoreElements(); ) {

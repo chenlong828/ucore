@@ -1,54 +1,54 @@
 package com.uuweaver.ucore.amqp.dispatcher;
 
-import com.uuweaver.ucore.amqp.interfaces.DispatchExchange;
-import com.uuweaver.ucore.amqp.interfaces.MessageRoute;
-import com.uuweaver.ucore.util.PkgScanner;
-import com.uuweaver.ucore.util.SpringContextUtil;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.uuweaver.ucore.amqp.interfaces.DispatchExchange;
+import com.uuweaver.ucore.amqp.interfaces.MessageRoute;
+import com.uuweaver.ucore.util.SpringContextUtils;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.security.InvalidParameterException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Description: AMQP消息处理分发配置工具，根据每个消息处理cmdlet的annotation进行配置。
+ * AMQP消息处理分发配置工具，根据每个消息处理cmdlet的annotation进行配置。
  * User: chenlong828
  * Date: 10/10/12
  * Time: 8:02 PM
  */
 public class AMQPDispatcher {
 
-    private static transient Logger logger = LoggerFactory.getLogger(AMQPDispatcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(AMQPDispatcher.class);
 
     private ConnectionFactory connectionFactory;
 
-    private ExecutorService executor_service;
+    private ExecutorService executorService;
 
     private Connection conn;
 
-    private Channel channel;
+    private ChannelManager channelManager;
 
-    private List<String> packageList;
+    //private List<DispatchExchange> dispatchExchangeList;
 
-    private List<DispatchExchange> dispatchExchangeList;
+    private int concurrentAMQP;
 
     private int concurrentThread;
 
-    private boolean enabled;
+    public AMQPDispatcher() {
 
-    public AMQPDispatcher()
-    {
-        enabled = false;
     }
 
-    public void setPackageList(List<String> package_list) {
-        packageList = package_list;
+    public void setConcurrentAMQP(int value)
+    {
+        this.concurrentAMQP = value;
     }
 
     public void setConnectionFactory(ConnectionFactory connectionFactory) {
@@ -59,83 +59,76 @@ public class AMQPDispatcher {
         this.concurrentThread = concurrentThread;
     }
 
+    public void setChannelManager(ChannelManager channelManager) {
+        this.channelManager = channelManager;
+    }
+
     public void setDispatchExchangeList(List<DispatchExchange> dispatchExchangeList) {
-        this.dispatchExchangeList = dispatchExchangeList;
+        //this.dispatchExchangeList = dispatchExchangeList;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public void InitConfig() throws IOException {
-
-        if (!enabled) return;
-
+    public void init() throws IOException, ClassNotFoundException {
         logger.info("Starting init MessageDispatcher...");
 
-        executor_service = Executors.newFixedThreadPool(concurrentThread);
-        conn = connectionFactory.newConnection(executor_service);
+        executorService = Executors.newFixedThreadPool(concurrentThread);
+        conn = connectionFactory.newConnection(executorService);
 
-        channel = conn.createChannel();
+        channelManager.initChannel(conn);
 
-        ConfigExchange(channel);
+        configAMQPCmdlet();
+    }
 
-        for(String package_name: packageList)
-        {
-            List<String> class_list = PkgScanner.getClassInPackage(package_name);
-            for(String class_name: class_list)
-            {
-                try {
-                    Annotation[] annotations = Class.forName(class_name).getAnnotations();
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof MessageRoute) {
-                            RegisterMessageCmdlet(channel, class_name, (MessageRoute) annotation);
-                        }
+
+    private void configAMQPCmdlet() throws IOException {
+
+        Reflections reflections = SpringContextUtils.getBean("reflections", Reflections.class);
+        Set<Class<?>> annotateClazzs = reflections.getTypesAnnotatedWith(MessageRoute.class);
+        for(Class clazz : annotateClazzs) {
+            Annotation[] annotations = clazz.getAnnotations();
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof MessageRoute) {
+                    try {
+                        registerMessageCmdlet(clazz.getName(), (MessageRoute) annotation);
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
                     }
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
                 }
             }
         }
     }
 
-    public void CleanConfig() throws IOException {
-
-        channel.close();
+    public void clean() throws IOException {
+        channelManager.closeChannel();
         conn.close();
-        executor_service.shutdown();
+        executorService.shutdown();
     }
 
-    private void RegisterMessageCmdlet(Channel channel, String class_name, MessageRoute mr)
-            throws IOException, ClassNotFoundException {
-        String queue_name = "queue." + mr.RouteKey();
 
-        logger.info("Attaching message RouteKey {} with cmdlet: {}", mr.RouteKey(), class_name);
+
+    private void registerMessageCmdlet(String className, MessageRoute mr)
+            throws IOException, ClassNotFoundException, InvalidParameterException {
+        String queueName = "queue." + mr.RouteKey();
+
+
+        logger.debug("Attaching message RouteKey {} with cmdlet: {}", mr.RouteKey(), className);
 
         //declare the queue as non-durable, non-exclusive, auto-delete and without detail configuration.
-        channel.queueDeclare(queue_name, false, false, true,null);
-        channel.queueBind(queue_name,mr.SourceExchange(), mr.RouteKey());
-
-        AbstractMessageCmdlet cmdlet = (AbstractMessageCmdlet) SpringContextUtil.getBeanByClassName(class_name);
-        cmdlet.setChannel(channel);
-        channel.basicConsume(queue_name, cmdlet.getCallback());
-    }
 
 
-    private void ConfigExchange(Channel channel) throws IOException {
-        MessageRouterExchange route_exchange = new MessageRouterExchange();
-
-        channel.exchangeDeclare(route_exchange.getName(), route_exchange.getType(), route_exchange.isDurable(),
-                route_exchange.isAutoDelete(), route_exchange.getArguments());
+        AbstractMessageCmdlet cmdlet = (AbstractMessageCmdlet) SpringContextUtils.getBeanByClassName(className);
 
 
-        for(DispatchExchange exchange: dispatchExchangeList)
+
+
+        for(int i = 0; i < mr.ConsumerCount(); i++)
         {
-            channel.exchangeDeclare(exchange.getName(), exchange.getType(), exchange.isDurable(),
-                    exchange.isAutoDelete(), exchange.getArguments());
-            channel.exchangeBind(exchange.getName(), route_exchange.getName(), exchange.getRouteKey());
+            Channel channel = channelManager.addDynamicChannel();
+            channel.queueDeclare(queueName, false, false, true, null);
+            channel.queueBind(queueName, mr.SourceExchange(), mr.RouteKey());
+            cmdlet.setChannel(channel);
+            channel.basicConsume(queueName, cmdlet.getCallback());
         }
+
+
     }
-
-
 }

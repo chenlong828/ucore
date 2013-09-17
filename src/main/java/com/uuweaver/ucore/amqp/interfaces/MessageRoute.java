@@ -18,4 +18,8 @@ public @interface MessageRoute {
     String RouteKey();
 
     String SourceExchange();
+
+    int ConsumerCount() default 9;
+
+    MessageQoS QoS() default MessageQoS.Normal;
 }

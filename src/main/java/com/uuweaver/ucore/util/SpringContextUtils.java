@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationContextAware;
  * Time: 1:55 下午
  * To change this template use File | Settings | File Templates.
  */
-public class SpringContextUtil implements ApplicationContextAware {
+public class SpringContextUtils implements ApplicationContextAware {
 
     // Spring应用上下文环境
     private static ApplicationContext applicationContext;
@@ -22,7 +22,7 @@ public class SpringContextUtil implements ApplicationContextAware {
      * @param applicationContext Spring的上下文环境
      */
     public void setApplicationContext(ApplicationContext applicationContext) {
-        SpringContextUtil.applicationContext = applicationContext;
+        SpringContextUtils.applicationContext = applicationContext;
     }
 
     /**
@@ -37,7 +37,7 @@ public class SpringContextUtil implements ApplicationContextAware {
      *
      * @param name
      * @return Object 一个以所给名字注册的bean的实例
-     * @throws BeansException
+     * @throws org.springframework.beans.BeansException
      */
     public static Object getBean(String name) throws BeansException {
         return applicationContext.getBean(name);
@@ -47,13 +47,15 @@ public class SpringContextUtil implements ApplicationContextAware {
         return applicationContext.getBean(name, clazz);
     }
 
-    public static Object getBeanByClassName(String name) throws BeansException, ClassNotFoundException
-    {
+    public static Object getBeanByClass(Class<?> clazz) throws BeansException, ClassNotFoundException {
+        return applicationContext.getBean(clazz);
+    }
+
+    public static Object getBeanByClassName(String name) throws BeansException, ClassNotFoundException {
         return applicationContext.getBean(Class.forName(name));
     }
 
-    public static Object getBeanWithArgs(String name, Object... args)
-    {
+    public static Object getBeanWithArgs(String name, Object... args) {
         return applicationContext.getBean(name, args);
     }
 

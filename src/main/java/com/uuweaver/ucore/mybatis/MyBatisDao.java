@@ -1,6 +1,5 @@
 package com.uuweaver.ucore.mybatis;
 
-import com.uuweaver.ucore.util.Page;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.util.ReflectionUtils;

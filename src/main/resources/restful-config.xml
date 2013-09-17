@@ -3,13 +3,9 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="rest_dispatcher" class="com.uuweaver.ucore.rest.dispatch.RESTDispatchHandler"
-          init-method="Init">
-        <property name="packageList">
-            <list>
-                <value>com.uuweaver.ucore.rest.handlers</value>
-            </list>
-        </property>
+    <bean id="rest_dispatcher" class="com.uuweaver.ucore.rest.dispatch.RESTDispatcher"
+          init-method="init">
+
     </bean>
 
 </beans>

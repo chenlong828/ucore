@@ -9,7 +9,6 @@ import org.eclipse.jetty.server.Request;
 import org.springframework.stereotype.Controller;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Enumeration;
@@ -25,11 +24,8 @@ import java.util.Enumeration;
 @RESTAnnotate(URL="/*", Methods=HttpMethods.GET)
 public class DebugRESTCmdlet extends AbstractRESTCmdlet {
 
-    @Resource
-    private HelloWorldHandler helloWorldHandler;
-
     @Override
-    public AbstractRESTResult Execute(Request request){
+    public AbstractRESTResult execute(Request request){
 
         PlainTextRESTResult result = new PlainTextRESTResult();
         Writer response_writer = result.getWriter();

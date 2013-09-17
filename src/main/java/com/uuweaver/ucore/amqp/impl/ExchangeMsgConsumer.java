@@ -1,10 +1,10 @@
 package com.uuweaver.ucore.amqp.impl;
 
+import com.rabbitmq.client.*;
 import com.uuweaver.ucore.amqp.core.Binding;
 import com.uuweaver.ucore.amqp.core.ConsumeInfo;
 import com.uuweaver.ucore.amqp.core.Exchange;
 import com.uuweaver.ucore.amqp.core.Queue;
-import com.rabbitmq.client.*;
 
 import java.io.IOException;
 

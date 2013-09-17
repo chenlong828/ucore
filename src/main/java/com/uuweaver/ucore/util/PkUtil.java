@@ -33,4 +33,9 @@ public class PkUtil {
         uniChar = uniChar + genRandomStr();
         return uniChar;
     }
+
+    public static String getRandomStr() {
+        String uniChar = DateUtils.getCurrentTime().replaceAll("-", "").replaceAll(":", "").replace(".", "").replace(" ", "");
+        return uniChar;
+    }
 }
