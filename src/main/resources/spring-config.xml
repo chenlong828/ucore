@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation=" http://www.springframework.org/schema/beans
+                            http://www.springframework.org/schema/beans/spring-beans.xsd
+                            http://www.springframework.org/schema/context
+                            http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <bean id="springContextUtil" class="com.uuweaver.ucore.util.SpringContextUtil" />
+    <bean id="springContextUtil" class="com.uuweaver.ucore.util.SpringContextUtils" />
 
     <import resource="classpath:restful-config.xml"/>
     <import resource="classpath:db-config.xml"/>
+    <import resource="classpath:jetty-config.xml"/>
+
+
+    <bean id="reflections" class="org.reflections.Reflections">
+        <constructor-arg value="com.uuweaver"/>
+    </bean>
+
+    <!-- 使用spring annotation自动扫描配置 -->
+    <context:component-scan base-package="com.uuweaver"/>
+
 </beans>

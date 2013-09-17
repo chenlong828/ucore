@@ -16,5 +16,7 @@ public class App
 
         SpringContextUtils util = context.getBean(SpringContextUtils.class);
         util.setApplicationContext(context);
+
+        System.out.println("----------------->start server end!!!");
     }
 }
